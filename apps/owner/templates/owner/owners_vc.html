@@ -1,0 +1,30 @@
+{% extends "owner/base_generic.html"  %}
+
+{% block content %}
+
+<div  class="card-body">
+    <p>Lista de Owners registrados</p>
+    <a type="button" class="btn btn-success" href="{% url 'owner_create_vc'%}">Crear Owner</a>
+    <form method="post">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Descripción de Owner</th>
+                    <th scope="col">Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for owner in object_list %}
+                    <tr>
+                        <td><p class="item">{{ owner.nombre }} tiene {{owner.edad }} años y es de {{owner.pais}}</p></td>
+
+                        <td><a type="button" class="btn btn-danger" href="{% url 'owner_delete_vc' owner.id %}">Eliminar Owner</a>
+                        <a type="button" class="btn btn-primary" href="{% url 'owner_edit_vc' owner.id %}">Editar Owner</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </form>
+
+</div>
+{% endblock %}
