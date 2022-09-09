@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 
 
@@ -5,10 +6,21 @@ from apps.owner.forms import OwnerForm
 from apps.owner.models import Owner
 
 from django.db.models import Q, F
+from apps.owner.serializers import OwnerSerializer
 
 #Segunda parte de la clase
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+
+# Serializador
+from django.core import serializers as ssr
+
+# DRF
+from rest_framework.generics import ListAPIView
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from rest_framework import status
+
 
 def owner_list(request):
     # data_context = {'nombre_owner': 'KEVIN',
@@ -202,3 +214,64 @@ class OwnerDelete(DeleteView):
     model = Owner
     template_name = 'owner/owner-confirm-delete.html'
     success_url = reverse_lazy('owner_list_vc')
+
+
+"""Serialización"""
+
+def ListOwnerSerializer(request):
+    #query
+    lista_owner = ssr.serialize('json', Owner.objects.all(), fields=['nombre', 'edad'])
+    return HttpResponse(lista_owner, content_type='application/json')
+
+
+
+"""Serialización con DJANGO"""
+class OnwnerApiView(ListAPIView):
+    queryset = Owner.objects.all()
+    serializer_class = OwnerSerializer
+
+
+"""Serialización con funciones DRF"""
+@api_view(['GET', 'POST'])
+def owner_api_view(request):
+
+    if request.method == 'GET':
+        queryset = Owner.objects.all()
+        serializer_class = OwnerSerializer(queryset, many=True)
+        return Response(serializer_class.data, status=status.HTTP_200_OK)
+
+    elif request.method == 'POST':
+        serializer = OwnerSerializer(data=request.data, status=status.HTTP_201_CREATED)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(serializer.errors)
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def owner_detail_view(request, pk):
+    queryset = Owner.objects.filter(id=pk).first()
+    if queryset:
+        if request.method == 'GET':
+            #queryset = Owner.objects.filter(id=pk).first()
+            serializer_class = OwnerSerializer(queryset)
+
+            return Response(serializer_class.data, status=status.HTTP_200_OK)
+
+        elif request.method == 'PUT':
+            #queryset = Owner.objects.filter(id=pk).first()
+            serializer_class = OwnerSerializer(queryset, data=request.data)
+
+            if serializer_class.is_valid():
+                serializer_class.save()
+                return Response(serializer_class.data)
+            return Response(serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        elif request.method == 'DELETE':
+            #queryset = Owner.objects.filter(id=pk).first()
+            queryset.delete()
+            #return Response('El owner ha sido eliminado satisfactoriamente')
+            return Response({'message': 'Owner se ha eliminado correctamente'}, status=status.HTTP_200_OK)
+
+    return Response({'message': 'No se ha encontrado el owner que buscaba'}, status=status.HTTP_400_BAD_REQUEST)

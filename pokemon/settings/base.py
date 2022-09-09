@@ -22,7 +22,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    # DRF
+    'rest_framework'
 ]
 
 LOCAL_APPS = [
